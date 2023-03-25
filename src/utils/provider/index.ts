@@ -37,6 +37,10 @@ class ImportRulesPluginProvider {
       this.initialized = true;
     });
   }
+
+  findModuleOfFile(file: string) {
+    return this.modules.findIndex((module) => file.includes(module));
+  }
 }
 
 export const provider = new ImportRulesPluginProvider();
