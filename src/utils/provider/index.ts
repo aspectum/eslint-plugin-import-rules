@@ -1,5 +1,6 @@
 import type { RuleContext } from "@typescript-eslint/utils/dist/ts-eslint";
 import path from "path";
+import fs from "fs";
 import { globSync } from "glob";
 import { ImportRules } from "../../types/context-settings";
 
@@ -27,7 +28,9 @@ class ImportRulesPluginProvider {
         absModule = path.join(baseDir, module);
       }
 
-      const resolvedModules = globSync(absModule);
+      const resolvedModules = globSync(absModule).filter(
+        (module) => fs.existsSync(module) && fs.lstatSync(module).isDirectory()
+      );
 
       this.modules.push(...resolvedModules);
 
