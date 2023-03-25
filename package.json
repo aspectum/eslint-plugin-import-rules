@@ -1,5 +1,5 @@
 {
-  "name": "eslint-plugin-import-rules",
+  "name": "@aspectum/eslint-plugin-import-rules",
   "version": "0.1.0",
   "description": "ESLint plugin to validate imports against pre defined rules",
   "main": "dist/index.js",
