@@ -1,5 +1,5 @@
-import { relativeImportInsideModule } from "./relative-import-inside-module";
+import { importsInModules } from "./imports-in-modules";
 
 export const rules = {
-  "relative-import-inside-module": relativeImportInsideModule,
+  "imports-in-modules": importsInModules,
 };

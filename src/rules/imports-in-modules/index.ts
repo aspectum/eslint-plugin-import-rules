@@ -3,8 +3,8 @@ import ts from "typescript";
 import { createRule } from "../../utils/create-rule";
 import { provider } from "../../utils/provider";
 
-export const relativeImportInsideModule = createRule({
-  name: "relative-import-inside-module",
+export const importsInModules = createRule({
+  name: "imports-in-modules",
   meta: {
     docs: {
       description: "description",
