@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^5.56.0"
   }
 }
