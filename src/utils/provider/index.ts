@@ -30,6 +30,8 @@ class ImportRulesPluginProvider {
       const resolvedModules = globSync(absModule);
 
       this.modules.push(...resolvedModules);
+
+      this.initialized = true;
     });
   }
 }
