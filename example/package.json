@@ -1,0 +1,16 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "@aspectum/eslint-plugin-import-rules": "file:..",
+    "@typescript-eslint/parser": "^5.56.0",
+    "eslint": "^8.36.0"
+  }
+}
