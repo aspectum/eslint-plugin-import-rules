@@ -1,5 +1,5 @@
 import { TSESTree } from "@typescript-eslint/utils";
-import { createRule } from "utils/create-rule";
+import { createRule } from "../../utils/create-rule";
 
 export const relativeImportInsideModule = createRule({
   name: "relative-import-inside-module",
@@ -19,8 +19,9 @@ export const relativeImportInsideModule = createRule({
   defaultOptions: [],
   create(context) {
     return {
-      Decorator(node: TSESTree.Node): void {},
-      ClassDeclaration(node: TSESTree.Node): void {},
+      ImportDeclaration(node: TSESTree.ImportDeclaration): void {
+        console.log(context.getFilename());
+      },
     };
   },
 });
