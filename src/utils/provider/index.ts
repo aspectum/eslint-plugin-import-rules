@@ -5,9 +5,9 @@ import { globSync } from "glob";
 import { ImportRules } from "../../types/context-settings";
 
 class ImportRulesPluginProvider {
-  initialized = false;
+  private initialized = false;
 
-  modules: string[] = [];
+  private modules: string[] = [];
 
   initialize(context: Readonly<RuleContext<any, any>>) {
     if (this.initialized) return;
