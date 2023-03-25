@@ -8,7 +8,7 @@ class ImportRulesPluginProvider {
 
   modules: string[] = [];
 
-  initialize(context: Readonly<RuleContext<never, never>>) {
+  initialize(context: Readonly<RuleContext<any, any>>) {
     if (this.initialized) return;
 
     (context.settings.importRules as ImportRules).modules.forEach((module) => {
