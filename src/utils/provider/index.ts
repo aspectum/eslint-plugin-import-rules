@@ -57,6 +57,45 @@ class ImportRulesPluginProvider {
 
     return resolvedModule;
   }
+
+  findRelativeImportPath(currentFile: string, importedFile: string) {
+    const currentFilePaths = currentFile.split("/");
+    const importedFilePaths = importedFile.split("/");
+    let i = 0;
+    for (
+      i = 0;
+      i < currentFilePaths.length && i < importedFilePaths.length;
+      i++
+    ) {
+      if (currentFilePaths[i] !== importedFilePaths[i]) {
+        break;
+      }
+    }
+    const importPaths = Array<string>(currentFilePaths.length - i - 1).fill(
+      ".."
+    );
+
+    for (let j = 0; j < importPaths.length; j++) {
+      importPaths.push(importedFilePaths[i]);
+      const path = importPaths.join("/");
+      const resolvedModule = this.resolveModuleName(currentFile, path);
+      if (resolvedModule) return path;
+    }
+
+    throw new Error("Could not find relative import path");
+  }
+
+  generateAbsoluteImport(file: string, module: number) {
+    const pathBeforeModule = this.modules[module].replace(/[^/]+$/, "");
+
+    const chunks = file.replace(pathBeforeModule, "").split("/");
+
+    let importPath = "";
+
+    for (let i = 0; i < chunks.length; i++) {
+      importPath += "/" + chunks[i];
+    }
+  }
 }
 
 export const provider = new ImportRulesPluginProvider();
