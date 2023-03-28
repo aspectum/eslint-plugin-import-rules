@@ -20,8 +20,8 @@ export const importsInModules = createRule({
         "The plugin was unable to resolve this import. Ensure it is valid or check your configuration",
     },
     schema: [],
-    // hasSuggestions: false,
     type: "layout",
+    fixable: "code",
   },
   defaultOptions: [],
   create(context) {
@@ -31,11 +31,9 @@ export const importsInModules = createRule({
 
         const currentFile = context.getFilename();
 
-        const { resolvedModule } = ts.resolveModuleName(
-          node.source.value,
+        const resolvedModule = provider.resolveModuleName(
           currentFile,
-          context.parserServices?.program.getCompilerOptions()!,
-          ts.sys
+          node.source.value
         );
 
         if (!resolvedModule?.resolvedFileName)

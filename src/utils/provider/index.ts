@@ -1,16 +1,21 @@
 import type { RuleContext } from "@typescript-eslint/utils/dist/ts-eslint";
-import path from "path";
 import fs from "fs";
 import { globSync } from "glob";
+import path from "path";
+import ts from "typescript";
 import { ImportRules } from "../../types/context-settings";
 
 class ImportRulesPluginProvider {
   private initialized = false;
 
-  private modules: string[] = [];
+  private context!: Readonly<RuleContext<any, any>>;
+
+  modules: string[] = [];
 
   initialize(context: Readonly<RuleContext<any, any>>) {
     if (this.initialized) return;
+
+    this.context = context;
 
     (context.settings.importRules as ImportRules).modules.forEach((module) => {
       let absModule: string;
@@ -40,6 +45,17 @@ class ImportRulesPluginProvider {
 
   findModuleOfFile(file: string) {
     return this.modules.findIndex((module) => file.includes(module));
+  }
+
+  resolveModuleName(currentFile: string, importPath: string) {
+    const { resolvedModule } = ts.resolveModuleName(
+      importPath,
+      currentFile,
+      this.context.parserServices?.program.getCompilerOptions()!,
+      ts.sys
+    );
+
+    return resolvedModule;
   }
 }
 
