@@ -85,6 +85,35 @@ class ImportRulesPluginProvider {
     throw new Error("Could not find relative import path");
   }
 
+  makeImportDeclaration(name: string, isDefault: boolean, importPath: string) {
+    // const importName = isDefault
+    //   ? ts.factory.createIdentifier(name)
+    //   : undefined;
+
+    // const namedBindings = !isDefault
+    //   ? ts.factory.createNamedImports([
+    //       ts.factory.createImportSpecifier(
+    //         false,
+    //         undefined,
+    //         ts.factory.createIdentifier(name)
+    //       ),
+    //     ])
+    //   : undefined;
+
+    // const importDeclaration = ts.factory.createImportDeclaration(
+    //   undefined,
+    //   ts.factory.createImportClause(false, importName, namedBindings),
+    //   ts.factory.createStringLiteral(importPath),
+    //   undefined
+    // );
+
+    // return importDeclaration.getFullText();
+
+    const importName = isDefault ? name : `{ ${name} }`;
+
+    return `import ${importName} from ${importPath};`;
+  }
+
   generateAbsoluteImport(file: string, module: number) {
     const pathBeforeModule = this.modules[module].replace(/[^/]+$/, "");
 
