@@ -1,27 +1,33 @@
+import type { TSESTree } from "@typescript-eslint/utils";
 import type { RuleContext } from "@typescript-eslint/utils/dist/ts-eslint";
 import fs from "fs";
 import { globSync } from "glob";
 import path from "path";
 import ts from "typescript";
 import { ImportRules } from "../../types/context-settings";
+import { NameAndFile } from "./types";
 
 class ImportRulesPluginProvider {
   private initialized = false;
 
   private context!: Readonly<RuleContext<any, any>>;
-
   private typeChecker!: ts.TypeChecker;
-
   private program!: ts.Program;
 
   modules: string[] = [];
 
+  /**
+   * Updates the context and loads the settings (for the first time)
+   */
   initialize(context: Readonly<RuleContext<any, any>>) {
+    // update context
     this.context = context;
     this.program = context.parserServices?.program!;
     this.typeChecker = this.program.getTypeChecker();
 
     if (this.initialized) return;
+
+    // load settings
 
     (context.settings.importRules as ImportRules).modules.forEach((module) => {
       let absModule: string;
@@ -47,6 +53,98 @@ class ImportRulesPluginProvider {
 
       this.initialized = true;
     });
+  }
+
+  /**
+   * Check if imports break the rules
+   */
+  check(
+    context: Readonly<RuleContext<any, any>>,
+    node: TSESTree.ImportDeclaration
+  ) {
+    this.initialize(context);
+
+    const currentFile = context.getFilename();
+
+    const resolvedModule = this.resolveModuleName(
+      currentFile,
+      node.source.value
+    );
+
+    // import is invalid
+    if (!resolvedModule?.resolvedFileName) return;
+
+    // which module (defined in settings) contains the current file
+    // and the imported file
+    const currentFileModule = this.findModuleOfFile(currentFile);
+    const importedFileModule = this.findModuleOfFile(
+      resolvedModule.resolvedFileName
+    );
+
+    const isRelativeImport = !!node.source.value.match(/^\.\.?\//);
+
+    // test if there are errors
+
+    const isAbsoluteInsideModule =
+      currentFileModule === importedFileModule && !isRelativeImport;
+
+    const isRelativeOutsideModule =
+      currentFileModule !== importedFileModule && isRelativeImport;
+
+    return {
+      isAbsoluteInsideModule,
+      isRelativeOutsideModule,
+      currentFile, // return to use later
+      importedFileModule, // return to use later
+    };
+  }
+
+  /**
+   * Maps out the imports to build the fixer
+   */
+  buildImportMap(node: TSESTree.ImportDeclaration) {
+    // get typescript node from ESLint node
+    const tsNode = this.context.parserServices?.esTreeNodeToTSNodeMap.get(node);
+
+    // import default
+    const def = tsNode?.importClause?.name;
+
+    // named import (and namespace)
+    const named = tsNode?.importClause?.namedBindings;
+    // each name imported
+    const elements =
+      named?.kind === ts.SyntaxKind.NamedImports ? named.elements : undefined;
+
+    // imported identifiers
+    const indentifiers = [
+      def,
+      ...(elements?.map((specifier) => specifier.name) ?? []),
+    ].filter(Boolean) as ts.Identifier[];
+
+    const importMap = indentifiers.reduce((_importMap, identifier) => {
+      // get symbol from identifier
+      const symbol = this.typeChecker.getSymbolAtLocation(identifier);
+      if (!symbol) return _importMap;
+
+      // get aliased symbol (symbol in original file that exported it)
+      const originalSymbol = this.typeChecker.getAliasedSymbol(symbol);
+      // file name of the original file that exported it
+      const fileName = originalSymbol
+        .getDeclarations()?.[0]
+        .getSourceFile().fileName;
+      if (!fileName) return _importMap;
+
+      // map out an object with information to build the import expression
+      _importMap.push({
+        name: identifier.getText(),
+        file: fileName,
+        isDefault: identifier.parent.kind === ts.SyntaxKind.ImportClause,
+        originalSymbol,
+      });
+      return _importMap;
+    }, [] as NameAndFile[]);
+
+    return importMap;
   }
 
   findModuleOfFile(file: string) {
