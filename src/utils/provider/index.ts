@@ -112,7 +112,7 @@ class ImportRulesPluginProvider {
 
     const importName = isDefault ? name : `{ ${name} }`;
 
-    return `import ${importName} from ${importPath};`;
+    return `import ${importName} from "${importPath}";`;
   }
 
   generateAbsoluteImport(file: string, module: number) {
