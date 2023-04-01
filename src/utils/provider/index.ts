@@ -10,12 +10,18 @@ class ImportRulesPluginProvider {
 
   private context!: Readonly<RuleContext<any, any>>;
 
+  private typeChecker!: ts.TypeChecker;
+
+  private program!: ts.Program;
+
   modules: string[] = [];
 
   initialize(context: Readonly<RuleContext<any, any>>) {
-    if (this.initialized) return;
-
     this.context = context;
+    this.program = context.parserServices?.program!;
+    this.typeChecker = this.program.getTypeChecker();
+
+    if (this.initialized) return;
 
     (context.settings.importRules as ImportRules).modules.forEach((module) => {
       let absModule: string;
@@ -58,7 +64,11 @@ class ImportRulesPluginProvider {
     return resolvedModule;
   }
 
-  findRelativeImportPath(currentFile: string, importedFile: string) {
+  findRelativeImportPath(
+    currentFile: string,
+    importedFile: string,
+    originalSymbol: ts.Symbol
+  ) {
     const currentFilePaths = currentFile.split("/");
     const importedFilePaths = importedFile.split("/");
     let i = 0;
@@ -75,14 +85,45 @@ class ImportRulesPluginProvider {
       ".."
     );
 
-    for (let j = 0; j < importPaths.length; j++) {
-      importPaths.push(importedFilePaths[i]);
+    for (let j = i; j < importedFilePaths.length; j++) {
+      importPaths.push(importedFilePaths[j]);
       const path = importPaths.join("/");
       const resolvedModule = this.resolveModuleName(currentFile, path);
-      if (resolvedModule) return path;
+
+      if (resolvedModule) {
+        const sourceFile = this.program.getSourceFile(
+          resolvedModule.resolvedFileName
+        );
+
+        // should not happen
+        if (!sourceFile) continue;
+
+        const fileSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
+
+        // should not happen
+        if (!fileSymbol) continue;
+
+        const exports = this.typeChecker.getExportsOfModule(fileSymbol);
+
+        if (exports.some((e) => e === originalSymbol)) return path;
+      }
     }
 
     throw new Error("Could not find relative import path");
+  }
+
+  findAbsoluteImportPath(importedFile: string, module: number) {
+    const pathBeforeModule = this.modules[module].replace(/[^/]+$/, "");
+
+    const chunks = importedFile.replace(pathBeforeModule, "").split("/");
+
+    let importPath = "";
+
+    for (let i = 0; i < chunks.length; i++) {
+      importPath += "/" + chunks[i];
+      const resolvedModule = this.resolveModuleName(importedFile, importPath);
+      if (resolvedModule) return path;
+    }
   }
 
   makeImportDeclaration(name: string, isDefault: boolean, importPath: string) {
@@ -113,18 +154,6 @@ class ImportRulesPluginProvider {
     const importName = isDefault ? name : `{ ${name} }`;
 
     return `import ${importName} from "${importPath}";`;
-  }
-
-  generateAbsoluteImport(file: string, module: number) {
-    const pathBeforeModule = this.modules[module].replace(/[^/]+$/, "");
-
-    const chunks = file.replace(pathBeforeModule, "").split("/");
-
-    let importPath = "";
-
-    for (let i = 0; i < chunks.length; i++) {
-      importPath += "/" + chunks[i];
-    }
   }
 }
 

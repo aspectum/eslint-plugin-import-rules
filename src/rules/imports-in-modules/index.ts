@@ -83,16 +83,35 @@ export const importsInModules = createRule({
             name: identifier.getText(),
             file: fileName,
             isDefault: identifier.parent.kind === ts.SyntaxKind.ImportClause,
+            originalSymbol,
           });
           return _importMap;
         }, [] as NameAndFile[]);
 
-        console.log(importMap);
-
         if (isAbsoluteInsideModule) {
+          const importTexts = importMap.map((imp) => {
+            const importPath = provider.findRelativeImportPath(
+              currentFile,
+              imp.file,
+              imp.originalSymbol
+            );
+
+            const importText = provider.makeImportDeclaration(
+              imp.name,
+              imp.isDefault,
+              importPath
+            );
+
+            return importText;
+          });
+
           return context.report({
             node: node,
             messageId: "insideModuleImportShouldBeRelative",
+            fix: (fixer) => [
+              fixer.remove(node),
+              fixer.insertTextAfter(node, importTexts.join("\n")),
+            ],
           });
         }
 
