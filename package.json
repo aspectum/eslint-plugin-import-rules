@@ -2,7 +2,8 @@
   "name": "@aspectum/eslint-plugin-import-rules",
   "version": "0.1.0",
   "description": "ESLint plugin to validate imports against pre defined rules",
-  "main": "dist/index.js",
+  "main": "dist/bundle.cjs",
+  "type": "module",
   "homepage": "https://github.com/aspectum/eslint-plugin-import-rules",
   "repository": {
     "type": "git",
@@ -17,10 +18,15 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "bundle": "rollup -c",
+    "bundle:watch": "rollup -c --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-terser": "^0.4.0",
     "@types/node": "^18.15.9",
+    "rollup": "^3.20.2",
     "typescript": "^5.0.2"
   },
   "dependencies": {
