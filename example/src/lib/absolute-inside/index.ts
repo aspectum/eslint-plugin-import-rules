@@ -1,3 +1,4 @@
-import { whatever } from "lib/whatever";
+import { whatever, somethingElse } from "lib/whatever";
 
 whatever;
+somethingElse;

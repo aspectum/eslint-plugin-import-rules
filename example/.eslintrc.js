@@ -3,7 +3,7 @@ module.exports = {
   parserOptions: { project: [__dirname + "/tsconfig.json"] },
   plugins: ["@aspectum/import-rules"],
   rules: {
-    "@aspectum/import-rules/relative-import-inside-module": "error",
+    "@aspectum/import-rules/imports-in-modules": "error",
   },
   ignorePatterns: [".eslintrc.js"],
   settings: {
