@@ -86,6 +86,7 @@ class ImportRulesPluginProvider {
   }
 
   makeImportDeclaration(name: string, isDefault: boolean, importPath: string) {
+    /** Below seems to be the proper way of doing it, but getText() and getFullText() throw errors */
     // const importName = isDefault
     //   ? ts.factory.createIdentifier(name)
     //   : undefined;
