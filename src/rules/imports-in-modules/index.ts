@@ -116,9 +116,30 @@ export const importsInModules = createRule({
         }
 
         if (isRelativeOutsideModule) {
+          const importTexts = importMap.map((imp) => {
+            const importPath = provider.findAbsoluteImportPath(
+              currentFile,
+              imp.file,
+              imp.originalSymbol,
+              importedFileModule
+            );
+
+            const importText = provider.makeImportDeclaration(
+              imp.name,
+              imp.isDefault,
+              importPath
+            );
+
+            return importText;
+          });
+
           return context.report({
             node: node,
             messageId: "outsideModuleImportShouldBeAbsolute",
+            fix: (fixer) => [
+              fixer.remove(node),
+              fixer.insertTextAfter(node, importTexts.join("\n")),
+            ],
           });
         }
       },
