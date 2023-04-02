@@ -72,7 +72,8 @@ class ImportRulesPluginProvider {
       node.source.value
     );
 
-    // import is invalid
+    // could not resolve import
+    // could be from node_modules
     if (!resolvedModule?.resolvedFileName) return;
 
     // which module (defined in settings) contains the current file

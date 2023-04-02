@@ -29,12 +29,13 @@ export const importsInModules = createRule({
         // check if there is an error
         const checkResults = provider.check(context, node);
 
-        // import is invalid
-        if (!checkResults)
-          return context.report({
-            node: node,
-            messageId: "unableToResolveImport",
-          });
+        // could not resolve import
+        // assume it is from node_modules
+        if (!checkResults) return;
+        // return context.report({
+        //   node: node,
+        //   messageId: "unableToResolveImport",
+        // });
 
         const {
           isAbsoluteInsideModule,
