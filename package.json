@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-import-rules",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ESLint plugin to validate imports against pre defined rules",
   "main": "dist/bundle.cjs",
   "type": "module",
