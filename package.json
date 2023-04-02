@@ -4,6 +4,9 @@
   "description": "ESLint plugin to validate imports against pre defined rules",
   "main": "dist/bundle.cjs",
   "type": "module",
+  "files": [
+    "./dist/bundle.cjs"
+  ],
   "homepage": "https://github.com/aspectum/eslint-plugin-import-rules",
   "repository": {
     "type": "git",
