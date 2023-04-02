@@ -6,6 +6,7 @@ import path from "path";
 import ts from "typescript";
 import { ImportRules } from "../../types/context-settings";
 import { NameAndFile } from "./types";
+import { findCommonElementsInArray } from "./utils";
 
 class ImportRulesPluginProvider {
   private initialized = false;
@@ -147,10 +148,16 @@ class ImportRulesPluginProvider {
     return importMap;
   }
 
+  /**
+   * Find index of module containing the input file
+   */
   findModuleOfFile(file: string) {
     return this.modules.findIndex((module) => file.includes(module));
   }
 
+  /**
+   * Helper to resolve an import to a file
+   */
   resolveModuleName(currentFile: string, importPath: string) {
     const { resolvedModule } = ts.resolveModuleName(
       importPath,
@@ -162,30 +169,24 @@ class ImportRulesPluginProvider {
     return resolvedModule;
   }
 
-  findRelativeImportPath(
+  /**
+   * Iteratively build a valid import path for the given symbol. It progresses along the
+   * path of the imported file and stops as early as possible.
+   * @param importPathChunks Path chunks (path.split("/")) of the import that is being built
+   * @param importedFilePathChunks Path chunks (path.split("/")) of the imported file (target)
+   * @param currentFile Full file path of the current file
+   * @param originalSymbol Symbol being imported
+   * @returns
+   */
+  private findImportPath(
+    importPathChunks: string[],
+    importedFilePathChunks: string[],
     currentFile: string,
-    importedFile: string,
     originalSymbol: ts.Symbol
   ) {
-    const currentFilePaths = currentFile.split("/");
-    const importedFilePaths = importedFile.split("/");
-    let i = 0;
-    for (
-      i = 0;
-      i < currentFilePaths.length && i < importedFilePaths.length;
-      i++
-    ) {
-      if (currentFilePaths[i] !== importedFilePaths[i]) {
-        break;
-      }
-    }
-    const importPaths = Array<string>(currentFilePaths.length - i - 1).fill(
-      ".."
-    );
-
-    for (let j = i; j < importedFilePaths.length; j++) {
-      importPaths.push(importedFilePaths[j]);
-      const path = importPaths.join("/");
+    for (let i = 0; i < importedFilePathChunks.length; i++) {
+      importPathChunks.push(importedFilePathChunks[i]);
+      const path = importPathChunks.join("/");
       const resolvedModule = this.resolveModuleName(currentFile, path);
 
       if (resolvedModule) {
@@ -206,57 +207,73 @@ class ImportRulesPluginProvider {
         if (exports.some((e) => e === originalSymbol)) return path;
       }
     }
-
-    throw new Error("Could not find relative import path");
   }
 
+  /**
+   * Build a relative import path for the given symbol
+   */
+  findRelativeImportPath(
+    currentFile: string,
+    importedFile: string,
+    originalSymbol: ts.Symbol
+  ) {
+    const currentFilePathChunks = currentFile.split("/");
+    const importedFilePathChunks = importedFile.split("/");
+
+    const indexOfDivergence = findCommonElementsInArray(
+      currentFilePathChunks,
+      importedFilePathChunks
+    );
+
+    // adds ".." corresponding to the directories going up
+    const importPaths = Array<string>(
+      currentFilePathChunks.length - indexOfDivergence - 1
+    ).fill("..");
+
+    // finds the file along the import path that exports the given symbol
+    const importPath = this.findImportPath(
+      importPaths,
+      importedFilePathChunks.splice(indexOfDivergence),
+      currentFile,
+      originalSymbol
+    );
+
+    return importPath;
+  }
+
+  /**
+   * Build an absolute import path for the given symbol
+   */
   findAbsoluteImportPath(
     currentFile: string,
     importedFile: string,
     originalSymbol: ts.Symbol,
     moduleOfImportedFile: number
   ) {
-    const moduleFilePaths = this.modules[moduleOfImportedFile].split("/");
-    const importedFilePaths = importedFile.split("/");
-    let i = 0;
-    for (
-      i = 0;
-      i < moduleFilePaths.length && i < importedFilePaths.length;
-      i++
-    ) {
-      if (moduleFilePaths[i] !== importedFilePaths[i]) {
-        break;
-      }
-    }
+    const moduleFilePathChunks = this.modules[moduleOfImportedFile].split("/");
+    const importedFilePathChunks = importedFile.split("/");
+
+    const indexOfDivergence = findCommonElementsInArray(
+      moduleFilePathChunks,
+      importedFilePathChunks
+    );
+
     const importPaths: string[] = [];
 
-    for (let j = i - 1; j < importedFilePaths.length; j++) {
-      importPaths.push(importedFilePaths[j]);
-      const path = importPaths.join("/");
-      const resolvedModule = this.resolveModuleName(currentFile, path);
+    const importPath = this.findImportPath(
+      importPaths,
+      // -1 because we want the module name
+      importedFilePathChunks.splice(indexOfDivergence - 1),
+      currentFile,
+      originalSymbol
+    );
 
-      if (resolvedModule) {
-        const sourceFile = this.program.getSourceFile(
-          resolvedModule.resolvedFileName
-        );
-
-        // should not happen
-        if (!sourceFile) continue;
-
-        const fileSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
-
-        // should not happen
-        if (!fileSymbol) continue;
-
-        const exports = this.typeChecker.getExportsOfModule(fileSymbol);
-
-        if (exports.some((e) => e === originalSymbol)) return path;
-      }
-    }
-
-    throw new Error("Could not find absolute import path");
+    return importPath;
   }
 
+  /**
+   * Generates the text for the import declaration
+   */
   makeImportDeclaration(name: string, isDefault: boolean, importPath: string) {
     /** Below seems to be the proper way of doing it, but getText() and getFullText() throw errors */
     // const importName = isDefault
