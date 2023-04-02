@@ -1,9 +1,9 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: { project: [__dirname + "/tsconfig.json"] },
-  plugins: ["@aspectum/import-rules"],
+  plugins: ["import-rules"],
   rules: {
-    "@aspectum/import-rules/imports-in-modules": "error",
+    "import-rules/imports-in-modules": "error",
   },
   ignorePatterns: [".eslintrc.js"],
   settings: {

@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "devDependencies": {
-    "@aspectum/eslint-plugin-import-rules": "file:..",
+    "eslint-plugin-import-rules": "file:..",
     "@typescript-eslint/parser": "^5.56.0",
     "eslint": "^8.36.0"
   }
