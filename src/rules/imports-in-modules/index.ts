@@ -85,6 +85,7 @@ export const importsInModules = createRule({
           const importTexts = importMap
             .map((imp) => {
               const importPath = provider.findAbsoluteImportPath(
+                currentFile,
                 imp.file,
                 imp.originalSymbol,
                 importedFileModule

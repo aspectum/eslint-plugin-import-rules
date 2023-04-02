@@ -182,25 +182,31 @@ class ImportRulesPluginProvider {
   private findImportPath(
     importPathChunks: string[],
     importedFilePathChunks: string[],
+    currentFile: string,
     originalSymbol: ts.Symbol
   ) {
     for (let i = 0; i < importedFilePathChunks.length; i++) {
       importPathChunks.push(importedFilePathChunks[i]);
       const path = importPathChunks.join("/");
+      const resolvedModule = this.resolveModuleName(currentFile, path);
 
-      const sourceFile = this.program.getSourceFile(path);
+      if (resolvedModule) {
+        const sourceFile = this.program.getSourceFile(
+          resolvedModule.resolvedFileName
+        );
 
-      // should not happen
-      if (!sourceFile) continue;
+        // should not happen
+        if (!sourceFile) continue;
 
-      const fileSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
+        const fileSymbol = this.typeChecker.getSymbolAtLocation(sourceFile);
 
-      // should not happen
-      if (!fileSymbol) continue;
+        // should not happen
+        if (!fileSymbol) continue;
 
-      const exports = this.typeChecker.getExportsOfModule(fileSymbol);
+        const exports = this.typeChecker.getExportsOfModule(fileSymbol);
 
-      if (exports.some((e) => e === originalSymbol)) return path;
+        if (exports.some((e) => e === originalSymbol)) return path;
+      }
     }
   }
 
@@ -229,6 +235,7 @@ class ImportRulesPluginProvider {
     const importPath = this.findImportPath(
       importPaths,
       importedFilePathChunks.splice(indexOfDivergence),
+      currentFile,
       originalSymbol
     );
 
@@ -239,6 +246,7 @@ class ImportRulesPluginProvider {
    * Build an absolute import path for the given symbol
    */
   findAbsoluteImportPath(
+    currentFile: string,
     importedFile: string,
     originalSymbol: ts.Symbol,
     moduleOfImportedFile: number
@@ -257,6 +265,7 @@ class ImportRulesPluginProvider {
       importPaths,
       // -1 because we want the module name
       importedFilePathChunks.splice(indexOfDivergence - 1),
+      currentFile,
       originalSymbol
     );
 
