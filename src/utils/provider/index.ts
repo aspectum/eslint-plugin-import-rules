@@ -234,7 +234,7 @@ class ImportRulesPluginProvider {
     // finds the file along the import path that exports the given symbol
     const importPath = this.findImportPath(
       importPaths,
-      importedFilePathChunks.splice(indexOfDivergence),
+      importedFilePathChunks.slice(indexOfDivergence),
       currentFile,
       originalSymbol
     );
@@ -264,7 +264,7 @@ class ImportRulesPluginProvider {
     const importPath = this.findImportPath(
       importPaths,
       // -1 because we want the module name
-      importedFilePathChunks.splice(indexOfDivergence - 1),
+      importedFilePathChunks.slice(indexOfDivergence - 1),
       currentFile,
       originalSymbol
     );
