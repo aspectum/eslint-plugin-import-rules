@@ -50,21 +50,25 @@ export const importsInModules = createRule({
         const importMap = provider.buildImportMap(node)!;
 
         if (isAbsoluteInsideModule) {
-          const importTexts = importMap.map((imp) => {
-            const importPath = provider.findRelativeImportPath(
-              currentFile,
-              imp.file,
-              imp.originalSymbol
-            );
+          const importTexts = importMap
+            .map((imp) => {
+              const importPath = provider.findRelativeImportPath(
+                currentFile,
+                imp.file,
+                imp.originalSymbol
+              );
 
-            const importText = provider.makeImportDeclaration(
-              imp.name,
-              imp.isDefault,
-              importPath
-            );
+              if (!importPath) return;
 
-            return importText;
-          });
+              const importText = provider.makeImportDeclaration(
+                imp.name,
+                imp.isDefault,
+                importPath
+              );
+
+              return importText;
+            })
+            .filter((importText) => importText !== undefined) as string[];
 
           return context.report({
             node: node,
@@ -77,22 +81,26 @@ export const importsInModules = createRule({
         }
 
         if (isRelativeOutsideModule) {
-          const importTexts = importMap.map((imp) => {
-            const importPath = provider.findAbsoluteImportPath(
-              currentFile,
-              imp.file,
-              imp.originalSymbol,
-              importedFileModule
-            );
+          const importTexts = importMap
+            .map((imp) => {
+              const importPath = provider.findAbsoluteImportPath(
+                currentFile,
+                imp.file,
+                imp.originalSymbol,
+                importedFileModule
+              );
 
-            const importText = provider.makeImportDeclaration(
-              imp.name,
-              imp.isDefault,
-              importPath
-            );
+              if (!importPath) return;
 
-            return importText;
-          });
+              const importText = provider.makeImportDeclaration(
+                imp.name,
+                imp.isDefault,
+                importPath
+              );
+
+              return importText;
+            })
+            .filter((importText) => importText !== undefined) as string[];
 
           return context.report({
             node: node,
