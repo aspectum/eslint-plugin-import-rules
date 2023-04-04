@@ -6,7 +6,7 @@ import path from "path";
 import ts from "typescript";
 import { ImportRules } from "../../types/context-settings";
 import { NameAndFile } from "./types";
-import { findCommonElementsInArray } from "./utils";
+import { findCommonElementsInArray, toPosix } from "./utils";
 
 class ImportRulesPluginProvider {
   private initialized = false;
@@ -46,9 +46,13 @@ class ImportRulesPluginProvider {
         absModule = path.join(baseDir, module);
       }
 
-      const resolvedModules = globSync(absModule).filter(
-        (module) => fs.existsSync(module) && fs.lstatSync(module).isDirectory()
-      );
+      const resolvedModules = globSync(absModule)
+        .filter(
+          (module) =>
+            fs.existsSync(module) && fs.lstatSync(module).isDirectory()
+        )
+        .map((module) => path.resolve(module))
+        .map(toPosix);
 
       this.modules.push(...resolvedModules);
 
@@ -96,7 +100,7 @@ class ImportRulesPluginProvider {
     return {
       isAbsoluteInsideModule,
       isRelativeOutsideModule,
-      currentFile, // return to use later
+      currentFile: toPosix(currentFile), // return to use later
       importedFileModule, // return to use later
     };
   }
@@ -153,7 +157,7 @@ class ImportRulesPluginProvider {
    * Find index of module containing the input file
    */
   findModuleOfFile(file: string) {
-    return this.modules.findIndex((module) => file.includes(module));
+    return this.modules.findIndex((module) => toPosix(file).includes(module));
   }
 
   /**
@@ -188,7 +192,10 @@ class ImportRulesPluginProvider {
     for (let i = 0; i < importedFilePathChunks.length; i++) {
       importPathChunks.push(importedFilePathChunks[i]);
       const path = importPathChunks.join("/");
-      const resolvedModule = this.resolveModuleName(currentFile, path);
+      const resolvedModule = this.resolveModuleName(
+        this.context.getFilename(),
+        path
+      );
 
       if (resolvedModule) {
         const sourceFile = this.program.getSourceFile(
@@ -218,8 +225,8 @@ class ImportRulesPluginProvider {
     importedFile: string,
     originalSymbol: ts.Symbol
   ) {
-    const currentFilePathChunks = currentFile.split("/");
-    const importedFilePathChunks = importedFile.split("/");
+    const currentFilePathChunks = currentFile.toLowerCase().split("/");
+    const importedFilePathChunks = importedFile.toLowerCase().split("/");
 
     const indexOfDivergence = findCommonElementsInArray(
       currentFilePathChunks,
@@ -251,8 +258,10 @@ class ImportRulesPluginProvider {
     originalSymbol: ts.Symbol,
     moduleOfImportedFile: number
   ) {
-    const moduleFilePathChunks = this.modules[moduleOfImportedFile].split("/");
-    const importedFilePathChunks = importedFile.split("/");
+    const moduleFilePathChunks = this.modules[moduleOfImportedFile]
+      .toLowerCase()
+      .split("/");
+    const importedFilePathChunks = importedFile.toLowerCase().split("/");
 
     const indexOfDivergence = findCommonElementsInArray(
       moduleFilePathChunks,
