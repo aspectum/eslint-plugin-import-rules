@@ -251,6 +251,8 @@ class ImportRulesPluginProvider {
       currentFilePathChunks.length - indexOfDivergence - 1
     ).fill("..");
 
+    if (importPaths.length === 0) importPaths.push(".");
+
     // finds the file along the import path that exports the given symbol
     const importPath = this.findImportPath(
       importPaths,
