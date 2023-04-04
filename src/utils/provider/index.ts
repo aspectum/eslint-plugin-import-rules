@@ -91,11 +91,18 @@ class ImportRulesPluginProvider {
 
     // test if there are errors
 
+    const neitherInModules =
+      currentFileModule === -1 && importedFileModule === -1;
+
     const isAbsoluteInsideModule =
-      currentFileModule === importedFileModule && !isRelativeImport;
+      !neitherInModules &&
+      currentFileModule === importedFileModule &&
+      !isRelativeImport;
 
     const isRelativeOutsideModule =
-      currentFileModule !== importedFileModule && isRelativeImport;
+      !neitherInModules &&
+      currentFileModule !== importedFileModule &&
+      isRelativeImport;
 
     return {
       isAbsoluteInsideModule,
