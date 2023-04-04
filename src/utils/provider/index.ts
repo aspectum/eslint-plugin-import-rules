@@ -196,6 +196,12 @@ class ImportRulesPluginProvider {
     currentFile: string,
     originalSymbol: ts.Symbol
   ) {
+    importedFilePathChunks[importedFilePathChunks.length - 1] =
+      importedFilePathChunks[importedFilePathChunks.length - 1].replace(
+        /\.(ts|tsx)$/,
+        ""
+      );
+
     for (let i = 0; i < importedFilePathChunks.length; i++) {
       importPathChunks.push(importedFilePathChunks[i]);
       const path = importPathChunks.join("/");
